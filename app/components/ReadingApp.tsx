@@ -11,46 +11,44 @@ const ReadingApp = () => {
   const [sentences, setSentences] = useState<string[]>([]);
   const [sliderValue, setSliderValue] = useState(0);
 
-  const generateSentences = () => {
+const generateSentences = () => {
     const validSubjects = getValidWordsFromCategory('subjects', selectedAnlaute);
     const validPredicates = getValidWordsFromCategory('predicates', selectedAnlaute);
     const validObjects = getValidWordsFromCategory('objects', selectedAnlaute);
     const validAdjectives = getValidWordsFromCategory('adjectives', selectedAnlaute);
     
-    const actionSentences: string[] = [];
-    const istSentences: string[] = [];
-    
-    validSubjects.forEach((subject: string) => {
-      validPredicates.forEach((predicate: string) => {
-        if (validObjects.length > 0) {
-          const object = validObjects[Math.floor(Math.random() * validObjects.length)];
-          actionSentences.push(`${subject} ${predicate} ${object}.`);
-        }
-      });
-    });
-
-    if ([...selectedAnlaute].some(anlaut => 'ist'.includes(anlaut.toLowerCase()))) {
-      validSubjects.forEach((subject: string) => {
-        validAdjectives.forEach((adjective: string) => {
-          istSentences.push(`${subject} ist ${adjective}.`);
-        });
-      });
-    }
-    
     const totalSentences = 15;
-    const spoProportion = 0.65; 
+    const spoProportion = 0.6;
     const spoCount = Math.floor(totalSentences * spoProportion);
     const istCount = totalSentences - spoCount;
     
-    // Filter action sentences to only include those with objects
-    const spoSentences = actionSentences.filter(sentence => sentence.split(' ').length > 3);
+    const generateRandomSentences = () => {
+      const spoSentences = [];
+      const istSentences = [];
 
-    const combinedSentences = [
-      ...spoSentences.slice(0, spoCount),
-      ...istSentences.slice(0, istCount)
-    ].sort(() => Math.random() - 0.5);
+      // Generate SPO sentences
+      if (validPredicates.length > 0){
+      for (let i = 0; i < spoCount; i++) {
+        const subject = validSubjects[Math.floor(Math.random() * validSubjects.length)];
+        const predicate = validPredicates[Math.floor(Math.random() * validPredicates.length)];
+        const object = validObjects[Math.floor(Math.random() * validObjects.length)];
+        spoSentences.push(`${subject} ${predicate} ${object}.`);
+      }}
+        if (validAdjectives.length > 0){
+      // Generate ist sentences
+      if ([...selectedAnlaute].some(anlaut => 'ist'.includes(anlaut.toLowerCase()))) {
+        for (let i = 0; i < istCount; i++) {
+          const subject = validSubjects[Math.floor(Math.random() * validSubjects.length)];
+          const adjective = validAdjectives[Math.floor(Math.random() * validAdjectives.length)];
+          istSentences.push(`${subject} ist ${adjective}.`);
+        }
+      }}
+
+      return [...spoSentences, ...istSentences].sort(() => Math.random() - 0.5);
+    };
     
-    setSentences(combinedSentences);
+    setSentences(generateRandomSentences()
+    );
   };
 
   const handlePrint = () => {
