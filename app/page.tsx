@@ -1,101 +1,103 @@
-import Image from "next/image";
+"use client"
 
-export default function Home() {
+import React, { useState } from 'react';
+import { AnlauteSelector } from './components/AnlautSelector';
+import { SentenceGenerator } from './components/SentenceGenerator';
+import { SentenceDisplay } from './components/SentenceDisplay';
+import { getValidWordsFromCategory } from './utils/wordUtils';
+
+const ReadingApp = () => {
+  const [selectedAnlaute, setSelectedAnlaute] = useState<Set<string>>(new Set());
+  const [sentences, setSentences] = useState<string[]>([]);
+  const [sliderValue, setSliderValue] = useState(0);
+
+  const generateSentences = () => {
+    const validSubjects = getValidWordsFromCategory('subjects', selectedAnlaute);
+    const validPredicates = getValidWordsFromCategory('predicates', selectedAnlaute);
+    const validObjects = getValidWordsFromCategory('objects', selectedAnlaute);
+    const validAdjectives = getValidWordsFromCategory('adjectives', selectedAnlaute);
+    
+    const actionSentences: string[] = [];
+    const istSentences: string[] = [];
+    
+    validSubjects.forEach((subject: string) => {
+      validPredicates.forEach((predicate: string) => {
+        if (validObjects.length > 0) {
+          const object = validObjects[Math.floor(Math.random() * validObjects.length)];
+          actionSentences.push(`${subject} ${predicate} ${object}.`);
+        }
+      });
+    });
+
+    if ([...selectedAnlaute].some(anlaut => 'ist'.includes(anlaut.toLowerCase()))) {
+      validSubjects.forEach((subject: string) => {
+        validAdjectives.forEach((adjective: string) => {
+          istSentences.push(`${subject} ist ${adjective}.`);
+        });
+      });
+    }
+    
+    const totalSentences = 15;
+    const spoProportion = 0.65; 
+    const spoCount = Math.floor(totalSentences * spoProportion);
+    const istCount = totalSentences - spoCount;
+    
+    // Filter action sentences to only include those with objects
+    const spoSentences = actionSentences.filter(sentence => sentence.split(' ').length > 3);
+
+    const combinedSentences = [
+      ...spoSentences.slice(0, spoCount),
+      ...istSentences.slice(0, istCount)
+    ].sort(() => Math.random() - 0.5);
+    
+    setSentences(combinedSentences);
+  };
+
+  const handlePrint = () => {
+    const printWindow = window.open('', '', 'width=600,height=600');
+    if (!printWindow) return;
+    
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Übungssätze</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            .sentence { font-size: 20px; padding: 10px 0; border-bottom: 1px solid #eee; }
+          </style>
+        </head>
+        <body>
+          ${sentences.map(sentence => 
+            `<div class="sentence">${sentence}</div>`
+          ).join('')}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      <AnlauteSelector 
+        sliderValue={sliderValue}
+        setSliderValue={setSliderValue}
+        setSelectedAnlaute={setSelectedAnlaute}
+      />
+      <SentenceGenerator 
+        selectedAnlaute={selectedAnlaute}
+        onGenerate={generateSentences}
+      />
+      {sentences.length > 0 && (
+        <SentenceDisplay 
+          sentences={sentences}
+          onPrint={handlePrint}
         />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      )}
     </div>
   );
-}
+};
+
+export default ReadingApp;
