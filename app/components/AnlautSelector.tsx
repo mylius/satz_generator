@@ -10,6 +10,14 @@ interface AnlauteSelectorProps {
 export const AnlauteSelector = ({ sliderValue, setSliderValue, setSelectedAnlaute }: AnlauteSelectorProps) => {
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
+    updateValues(value);
+  };
+
+  const handleAnlautClick = (index: number) => {
+    updateValues(index + 1);
+  };
+
+  const updateValues = (value: number) => {
     setSliderValue(value);
     setSelectedAnlaute(new Set(ANLAUTE.slice(0, value)));
   };
@@ -28,16 +36,17 @@ export const AnlauteSelector = ({ sliderValue, setSliderValue, setSelectedAnlaut
         />
         <div className="mt-4 grid grid-cols-11 gap-2">
           {ANLAUTE.map((anlaut, index) => (
-            <span 
+            <button 
               key={anlaut} 
-              className={`px-3 py-1 text-center rounded-lg ${
+              onClick={() => handleAnlautClick(index)}
+              className={`px-3 py-1 text-center rounded-lg transition-colors ${
                 index < sliderValue 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gray-100 text-gray-400'
+                  ? 'bg-blue-500 text-white hover:bg-blue-600' 
+                  : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
               }`}
             >
               {anlaut}
-            </span>
+            </button>
           ))}
         </div>
       </div>
