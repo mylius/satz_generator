@@ -23,8 +23,8 @@ export const AnlauteSelector = ({ sliderValue, setSliderValue, setSelectedAnlaut
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-2xl font-bold mb-4">Anlaute auswählen</h2>
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Anlaute auswählen</h2>
       <div className="mb-6">
         <input
           type="range"
@@ -41,8 +41,8 @@ export const AnlauteSelector = ({ sliderValue, setSliderValue, setSelectedAnlaut
               onClick={() => handleAnlautClick(index)}
               className={`px-3 py-1 text-center rounded-lg transition-colors ${
                 index < sliderValue 
-                  ? 'bg-blue-500 text-white hover:bg-blue-600' 
-                  : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                  ? 'bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700' 
+                  : 'bg-gray-100 text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600'
               }`}
             >
               {anlaut}

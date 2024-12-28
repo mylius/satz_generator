@@ -1,21 +1,48 @@
 "use client"
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AnlauteSelector } from './AnlautSelector';
 import { SentenceGenerator } from './SentenceGenerator';
 import { SentenceDisplay } from './SentenceDisplay';
-import { getValidWordsFromCategory } from '../utils/wordUtils';
+import {  getValidWordsFromCategory  } from '../utils/wordUtils';
+import { hyphenate } from "hyphen/de";
+
 
 const ReadingApp = () => {
   const [selectedAnlaute, setSelectedAnlaute] = useState<Set<string>>(new Set());
   const [sentences, setSentences] = useState<string[]>([]);
+  const [processedSentences, setProcessedSentences] = useState<string[]>([]);
   const [sliderValue, setSliderValue] = useState(0);
+  const [showSyllables, setShowSyllables] = useState(false);
+
+
+ useEffect(() => {
+    const processSentences = async () => {
+      if (!showSyllables) {
+        setProcessedSentences(sentences);
+        return;
+      }
+
+      const processed = await Promise.all(
+        sentences.map(async (sentence) => {
+          const hyphenated = await hyphenate(sentence);
+          return hyphenated.replace(/\u00AD/g, '·');
+        })
+      );
+      setProcessedSentences(processed);
+    };
+
+    processSentences();
+  }, [sentences, showSyllables]);
+
+
 
 const generateSentences = () => {
     const validSubjects = getValidWordsFromCategory('subjects', selectedAnlaute);
     const validPredicates = getValidWordsFromCategory('predicates', selectedAnlaute);
     const validObjects = getValidWordsFromCategory('objects', selectedAnlaute);
     const validAdjectives = getValidWordsFromCategory('adjectives', selectedAnlaute);
+    
     
     const totalSentences = 15;
     const spoProportion = 0.6;
@@ -27,14 +54,13 @@ const generateSentences = () => {
       const istSentences = [];
 
       // Generate SPO sentences
-      if (validPredicates.length > 0){
       for (let i = 0; i < spoCount; i++) {
         const subject = validSubjects[Math.floor(Math.random() * validSubjects.length)];
         const predicate = validPredicates[Math.floor(Math.random() * validPredicates.length)];
         const object = validObjects[Math.floor(Math.random() * validObjects.length)];
         spoSentences.push(`${subject} ${predicate} ${object}.`);
-      }}
-        if (validAdjectives.length > 0){
+      }
+
       // Generate ist sentences
       if ([...selectedAnlaute].some(anlaut => 'ist'.includes(anlaut.toLowerCase()))) {
         for (let i = 0; i < istCount; i++) {
@@ -42,7 +68,7 @@ const generateSentences = () => {
           const adjective = validAdjectives[Math.floor(Math.random() * validAdjectives.length)];
           istSentences.push(`${subject} ist ${adjective}.`);
         }
-      }}
+      }
 
       return [...spoSentences, ...istSentences].sort(() => Math.random() - 0.5);
     };
@@ -50,6 +76,7 @@ const generateSentences = () => {
     setSentences(generateRandomSentences()
     );
   };
+
 
   const handlePrint = () => {
     const printWindow = window.open('', '', 'width=600,height=600');
@@ -65,7 +92,7 @@ const generateSentences = () => {
           </style>
         </head>
         <body>
-          ${sentences.map(sentence => 
+          ${processedSentences.map(sentence => 
             `<div class="sentence">${sentence}</div>`
           ).join('')}
         </body>
@@ -77,6 +104,7 @@ const generateSentences = () => {
     printWindow.close();
   };
 
+
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <AnlauteSelector 
@@ -84,13 +112,27 @@ const generateSentences = () => {
         setSliderValue={setSliderValue}
         setSelectedAnlaute={setSelectedAnlaute}
       />
-      <SentenceGenerator 
-        selectedAnlaute={selectedAnlaute}
-        onGenerate={generateSentences}
-      />
-      {sentences.length > 0 && (
+      
+      <div className="flex items-center justify-between">
+        <SentenceGenerator 
+          selectedAnlaute={selectedAnlaute}
+          onGenerate={generateSentences}
+        />
+        
+        <label className="flex items-center ml-4 space-x-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showSyllables}
+            onChange={(e) => setShowSyllables(e.target.checked)}
+            className="rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+          />
+          <span>Silbentrennung</span>
+        </label>
+      </div>
+
+ {processedSentences.length > 0 && (
         <SentenceDisplay 
-          sentences={sentences}
+          sentences={processedSentences}
           onPrint={handlePrint}
         />
       )}
