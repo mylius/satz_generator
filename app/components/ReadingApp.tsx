@@ -4,8 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { AnlauteSelector } from './AnlautSelector';
 import { SentenceGenerator } from './SentenceGenerator';
 import { SentenceDisplay } from './SentenceDisplay';
-import {  getValidWordsFromCategory  } from '../utils/wordUtils';
-import { hyphenate } from "hyphen/de";
+import {  getValidWordsFromCategory, hyphenate  } from '../utils/wordUtils';
 
 
 const ReadingApp = () => {
@@ -25,8 +24,7 @@ const ReadingApp = () => {
 
       const processed = await Promise.all(
         sentences.map(async (sentence) => {
-          const hyphenated = await hyphenate(sentence);
-          return hyphenated.replace(/\u00AD/g, '·');
+          return  hyphenate(sentence);
         })
       );
       setProcessedSentences(processed);
