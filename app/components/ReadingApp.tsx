@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { AnlauteSelector } from './AnlautSelector';
 import { SentenceGenerator } from './SentenceGenerator';
 import { SentenceDisplay } from './SentenceDisplay';
-import {  getValidWordsFromCategory, hyphenate  } from '../utils/wordUtils';
+import {  getValidWordsFromCategory,hyphenate, getValidSubjects, getValidObjects, getValidAdverbials, getValidAdjectives  } from '../utils/wordUtils';
 
 
 const ReadingApp = () => {
@@ -36,45 +36,102 @@ const ReadingApp = () => {
 
 
 const generateSentences = () => {
-    const validSubjects = getValidWordsFromCategory('subjects', selectedAnlaute);
-    const validPredicates = getValidWordsFromCategory('predicates', selectedAnlaute);
-    const validObjects = getValidWordsFromCategory('objects', selectedAnlaute);
-    const validAdjectives = getValidWordsFromCategory('adjectives', selectedAnlaute);
-    
-    
-    const totalSentences = 15;
-    const spoProportion = 0.6;
-    const spoCount = Math.floor(totalSentences * spoProportion);
-    const istCount = totalSentences - spoCount;
-    
-    const generateRandomSentences = () => {
-      const spoSentences = [];
-      const istSentences = [];
+  const validSubjects = getValidSubjects(selectedAnlaute);
+  const validPredicates = getValidWordsFromCategory('predicates', selectedAnlaute);
+  const validAdjectives = getValidAdjectives(selectedAnlaute);
+  const validObjects = getValidObjects(selectedAnlaute);
+  const validAdverbials = getValidAdverbials(selectedAnlaute);
+  
+  const totalSentences = 15;
+  const spoProportion = 0.6;
+  const spoCount = Math.floor(totalSentences * spoProportion);
+  const istCount = totalSentences - spoCount;
+  
+  const generateRandomSentences = () => {
+    const spoSentences = [];
+    const istSentences = [];
 
-      // Generate SPO sentences
+    const canMakeSpO = validSubjects.length > 0 && validPredicates.length > 0;
+    const canMakeIstSentences = validSubjects.length > 0 && 
+                               validAdjectives.regular.length > 0 && 
+                               [...selectedAnlaute].some(anlaut => 'ist'.includes(anlaut.toLowerCase()));
+
+    // Helper function to add adverbials to a sentence
+    const addAdverbials = (sentence: string) => {
+      const addLocal = validAdverbials.local.length > 0 && Math.random() < 0.7; // 70% chance
+      const addTemporal = validAdverbials.temporal.length > 0 && Math.random() < 0.5; // 50% chance
+
+      let result = sentence.slice(0, -1); // Remove the period
+      
+      if (addTemporal) {
+        result += ' ' + validAdverbials.temporal[Math.floor(Math.random() * validAdverbials.temporal.length)];
+      }
+      if (addLocal) {
+        result += ' ' + validAdverbials.local[Math.floor(Math.random() * validAdverbials.local.length)];
+      }
+      
+      return result + '.';
+    };
+
+    // Generate SPO sentences if possible
+    if (canMakeSpO) {
       for (let i = 0; i < spoCount; i++) {
         const subject = validSubjects[Math.floor(Math.random() * validSubjects.length)];
         const predicate = validPredicates[Math.floor(Math.random() * validPredicates.length)];
-        const object = validObjects[Math.floor(Math.random() * validObjects.length)];
-        spoSentences.push(`${subject} ${predicate} ${object}.`);
-      }
+        
+        // Get all valid objects with articles and possible adjectives
+        const allObjects = [
+          ...validObjects.masculine.map(obj => ({
+            object: obj,
+            article: 'den',
+            adjectives: validAdjectives.akkusative.masculine
+          })),
+          ...validObjects.feminine.map(obj => ({
+            object: obj,
+            article: 'die',
+            adjectives: validAdjectives.akkusative.feminine
+          })),
+          ...validObjects.neuter.map(obj => ({
+            object: obj,
+            article: 'das',
+            adjectives: validAdjectives.akkusative.neuter
+          }))
+        ];
 
-      // Generate ist sentences
-      if ([...selectedAnlaute].some(anlaut => 'ist'.includes(anlaut.toLowerCase()))) {
-        for (let i = 0; i < istCount; i++) {
-          const subject = validSubjects[Math.floor(Math.random() * validSubjects.length)];
-          const adjective = validAdjectives[Math.floor(Math.random() * validAdjectives.length)];
-          istSentences.push(`${subject} ist ${adjective}.`);
+        if (allObjects.length > 0) {
+          const { article, object, adjectives } = allObjects[
+            Math.floor(Math.random() * allObjects.length)
+          ];
+          
+          // 70% chance to add an adjective if available
+          const addAdjective = adjectives.length > 0 && Math.random() < 0.7;
+          const adjective = addAdjective 
+            ? adjectives[Math.floor(Math.random() * adjectives.length)] + ' '
+            : '';
+          
+          const baseSentence = `${subject} ${predicate} ${article} ${adjective}${object}.`;
+          spoSentences.push(addAdverbials(baseSentence));
         }
       }
-
-      return [...spoSentences, ...istSentences].sort(() => Math.random() - 0.5);
-    };
+    }
     
-    setSentences(generateRandomSentences()
-    );
-  };
+    // Generate ist sentences if possible
+    if (canMakeIstSentences) {
+      for (let i = 0; i < istCount; i++) {
+        const subject = validSubjects[Math.floor(Math.random() * validSubjects.length)];
+        const adjective = validAdjectives.regular[
+          Math.floor(Math.random() * validAdjectives.regular.length)
+        ];
+        const baseSentence = `${subject} ist ${adjective}.`;
+        istSentences.push(addAdverbials(baseSentence));
+      }
+    }
 
+    return [...spoSentences, ...istSentences].sort(() => Math.random() - 0.5);
+  };
+  
+  setSentences(generateRandomSentences());
+};
 
   const handlePrint = () => {
     const printWindow = window.open('', '', 'width=600,height=600');

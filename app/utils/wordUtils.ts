@@ -23,7 +23,6 @@ export const canMakeWord = (word: string, selectedAnlaute: Set<string>): boolean
   for (const combo of SPECIAL_COMBINATIONS) {
     if (remainingWord.includes(combo)) {
       if (!selectedAnlauteUpper.has(combo)) {
-          console.log(selectedAnlauteUpper, combo, remainingWord);
         return false;
       }
       // Replace to avoid overlapping SPECIAL_COMBINATIONS
@@ -43,9 +42,130 @@ export const canMakeWord = (word: string, selectedAnlaute: Set<string>): boolean
 };
 
 
-export const getValidWordsFromCategory = (category: keyof WordBank, selectedAnlaute: Set<string>) => {
-  return WORD_BANK[category].filter((word: string) => canMakeWord(word, selectedAnlaute));
+export const getValidSubjects = (selectedAnlaute: Set<string>) => {
+  // Get names
+  const validNames = WORD_BANK.names.filter(name => 
+    canMakeWord(name, selectedAnlaute)
+  );
+
+  // Get nouns with articles
+  const validNouns = {
+    masculine: WORD_BANK.nouns.masculine
+      .filter(noun => canMakeWord(noun, selectedAnlaute))
+      .map(noun => `Der ${noun}`),
+    feminine: WORD_BANK.nouns.feminine
+      .filter(noun => canMakeWord(noun, selectedAnlaute))
+      .map(noun => `Die ${noun}`),
+    neuter: WORD_BANK.nouns.neuter
+      .filter(noun => canMakeWord(noun, selectedAnlaute))
+      .map(noun => `Das ${noun}`)
+  };
+
+  return [
+    ...validNames,
+    ...validNouns.masculine,
+    ...validNouns.feminine,
+    ...validNouns.neuter
+  ];
 };
+
+export const getValidObjects = (selectedAnlaute: Set<string>) => {
+  return {
+    masculine: WORD_BANK.nouns.masculine.filter(noun => canMakeWord(noun, selectedAnlaute)),
+    feminine: WORD_BANK.nouns.feminine.filter(noun => canMakeWord(noun, selectedAnlaute)),
+    neuter: WORD_BANK.nouns.neuter.filter(noun => canMakeWord(noun, selectedAnlaute))
+  };
+};
+
+
+export const getValidAdjectives = (selectedAnlaute: Set<string>) => {
+  return {
+    regular: WORD_BANK.adjectives.regular.filter(adj => 
+      canMakeWord(adj, selectedAnlaute)
+    ),
+    akkusative: {
+      masculine: WORD_BANK.adjectives.akkusative.masculine.filter(adj => 
+        canMakeWord(adj, selectedAnlaute)
+      ),
+      feminine: WORD_BANK.adjectives.akkusative.feminine.filter(adj => 
+        canMakeWord(adj, selectedAnlaute)
+      ),
+      neuter: WORD_BANK.adjectives.akkusative.neuter.filter(adj => 
+        canMakeWord(adj, selectedAnlaute)
+      )
+    }
+  };
+};
+
+export const getValidAdverbials = (selectedAnlaute: Set<string>) => {
+  return {
+    local: WORD_BANK.adverbials.local.filter(adv => 
+      canMakeWord(adv, selectedAnlaute)
+    ),
+    temporal: WORD_BANK.adverbials.temporal.filter(adv => 
+      canMakeWord(adv, selectedAnlaute)
+    )
+  };
+};
+
+
+export const getValidWordsFromCategory = (
+  category: keyof WordBank,
+  selectedAnlaute: Set<string>
+): string[] => {
+  const words = WORD_BANK[category];
+  
+  // Handle simple arrays (names, predicates)
+  if (Array.isArray(words)) {
+    return words.filter(word => canMakeWord(word, selectedAnlaute));
+  }
+  
+  // Handle nested structures
+  switch(category) {
+    case 'nouns': {
+      // Explicitly handle the nouns structure
+      const { masculine, feminine, neuter } = words as {
+        masculine: string[];
+        feminine: string[];
+        neuter: string[];
+      };
+      return [...masculine, ...feminine, ...neuter].filter(word => 
+        canMakeWord(word, selectedAnlaute)
+      );
+    }
+      
+    case 'adverbials': {
+      const { local, temporal } = words as {
+        local: string[];
+        temporal: string[];
+      };
+      return [...local, ...temporal].filter(word => 
+        canMakeWord(word, selectedAnlaute)
+      );
+    }
+      
+    case 'adjectives': {
+      const { regular, akkusative } = words as {
+        regular: string[];
+        akkusative: {
+          masculine: string[];
+          feminine: string[];
+          neuter: string[];
+        };
+      };
+      return [
+        ...regular,
+        ...akkusative.masculine,
+        ...akkusative.feminine,
+        ...akkusative.neuter
+      ].filter(word => canMakeWord(word, selectedAnlaute));
+    }
+      
+    default:
+      return [];
+  }
+};
+
 
 export function hyphenate(text: string) {
   // Split the text into words while preserving punctuation and spacing

@@ -1,6 +1,22 @@
 export type WordBank = {
-  subjects: string[];
+  names: string[];
+  nouns: {
+    masculine: string[];
+    feminine: string[];
+    neuter: string[];
+  };
   predicates: string[];
-  objects: string[];
-  adjectives: string[];
+  adverbials: {
+    local: string[];
+    temporal: string[];
+  };
+  adjectives: {
+    regular: string[];
+    akkusative: {
+      masculine: string[];
+      feminine: string[];
+      neuter: string[];
+    };
+  };
 };
+

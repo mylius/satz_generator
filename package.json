@@ -6,7 +6,10 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "coverage": "vitest run --coverage"
   },
   "dependencies": {
     "lucide-react": "^0.469.0",
@@ -25,15 +28,5 @@
     "tailwindcss": "^3.4.1",
     "typescript": "^5",
     "vitest": "^2.1.8"
-  },
-   "scripts": {
-    "test": "vitest",
-    "test:ui": "vitest --ui",
-    "coverage": "vitest run --coverage"
-  },
- "scripts": {
-    "test": "vitest",
-    "test:ui": "vitest --ui",
-    "coverage": "vitest run --coverage"
   }
 }
