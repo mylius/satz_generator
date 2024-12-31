@@ -1,18 +1,47 @@
 import { WORD_BANK } from '../constants';
 import { WordBank } from '../types';
 
+
+const SPECIAL_COMBINATIONS = [
+  'SCH',
+  'CH',
+  'EI',
+  'IE', 
+  'EU',
+  'AU',
+  'ÄU',
+  'QU'
+];
+
+
 export const canMakeWord = (word: string, selectedAnlaute: Set<string>): boolean => {
   if (selectedAnlaute.size === 0) return false;
   
-  let remainingWord = word.toLowerCase();
-  const sortedAnlaute = [...selectedAnlaute].sort((a, b) => b.length - a.length);
+  let remainingWord = word.toUpperCase();
+  const selectedAnlauteUpper = new Set([...selectedAnlaute].map(a => a.toUpperCase()));
   
-  for (const anlaut of sortedAnlaute) {
-    remainingWord = remainingWord.replaceAll(anlaut.toLowerCase(), '');
+  for (const combo of SPECIAL_COMBINATIONS) {
+    if (remainingWord.includes(combo)) {
+      if (!selectedAnlauteUpper.has(combo)) {
+          console.log(selectedAnlauteUpper, combo, remainingWord);
+        return false;
+      }
+      // Replace to avoid overlapping SPECIAL_COMBINATIONS
+      remainingWord = remainingWord.replaceAll(combo, ' ');
+    }
   }
   
-  return remainingWord.replace(/[ .,]/g, '').length === 0;
+  const sortedAnlaute = [...selectedAnlauteUpper].sort((a, b) => b.length - a.length);
+  
+  for (const anlaut of sortedAnlaute) {
+    remainingWord = remainingWord.replaceAll(anlaut, '');
+  }
+  
+  remainingWord = remainingWord.replace(/[ .,]/g, '');
+  
+  return remainingWord.length === 0;
 };
+
 
 export const getValidWordsFromCategory = (category: keyof WordBank, selectedAnlaute: Set<string>) => {
   return WORD_BANK[category].filter((word: string) => canMakeWord(word, selectedAnlaute));
